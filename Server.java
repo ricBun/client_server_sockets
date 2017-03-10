@@ -9,26 +9,34 @@ import java.util.Scanner;
 public class Server {
 
 	public static void main(String[] args) {
-		int number, temp;
+		String clientMessage = "";
+		String temp = "";
 		try {
 			//Creating server socket
 			ServerSocket serverSocket = new ServerSocket(29733);
 			
+			System.out.println("Server up and ready for connections...");
+			
 			//accept incoming request to socket from Client
 			Socket ss = serverSocket.accept();
 			
-			//scan for the number that the Client wants to pass to server
+			//scan for the message that the Client wants to pass to server
 			Scanner clientIn = new Scanner(ss.getInputStream());
 			
-			//store the number
-			number = clientIn.nextInt();
-			
-			//manipulate the data, e.g. add 10 to it
-			temp = number + 10;
-			
-			//passing new number to client
-			PrintStream serverOutput = new PrintStream(ss.getOutputStream());
-			serverOutput.println(temp);
+			while (clientIn.hasNextLine()) {
+				//store the Message
+				if ((clientMessage = clientIn.nextLine()) != null) {
+					System.out.println("client typed: " + clientMessage);
+					
+					//manipulate the string, uppercase
+					temp = clientMessage.toUpperCase();
+					
+					//passing new string to client
+					PrintStream serverOutput = new PrintStream(ss.getOutputStream());
+					serverOutput.println(temp);
+				}
+			}
+					
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
