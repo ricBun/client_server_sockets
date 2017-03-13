@@ -1,54 +1,69 @@
-package sockets;
+package threaded_sockets;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.Socket;
-import java.util.Scanner;
+import java.io.*;
+import java.net.*;
 
 public class Client {
-	
 	public static void main (String args[]) {
-		//accepting input from user
-		Scanner in = new Scanner(System.in);
-		int number;
-		String clientString = ""; 
-		String temp = "";
+		// ensure user passes in user name
+	    if(args.length == 0)
+	    {
+	        System.out.println("Please enter a username!");
+	        System.exit(0);
+	    }
+		
+		//name used to differentiate each client
+		String name = args[0];
 		
 		try {
-			//socket with ip address and port #
-			Socket clientSocket = new Socket("127.0.0.1", 29733);
+			//instantiate socket for this particular client
+			Socket clientSocket = new Socket("localhost", 29732);
 			
-			//get input stream from server
-			Scanner serverInput = new Scanner(clientSocket.getInputStream());
+			//send messages to server, true used to flush output after every line
+			PrintStream serverOutput = new PrintStream(clientSocket.getOutputStream(), true);
+			//reading client commands
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 			
-			//store string from user
-			System.out.println("Submit a message");
+			//reading messages sent from  server to client
+			BufferedReader serverToClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			
-			while ((clientString = in.nextLine()) != null) {
-				//pass string to the server
-				PrintStream serverOutput = new PrintStream(clientSocket.getOutputStream());
-				serverOutput.println(clientString);
+			//Storing client input
+			String clientInput = "";
+			while(!clientInput.equals("exit")) {
 				
-				/*
-				if (clientString.equals("exit")) {
-					//clientSocket.close();
-					break;
+				clientInput = bufferedReader.readLine();
+				//print client name and client input
+				serverOutput.println(name + ": " + clientInput);
+				
+				switch (clientInput) {
+					case "JOIN":
+						//tell server user wants to join game!
+						serverOutput.println("JOIN_" + name);
+						String joinMessage = serverToClient.readLine();
+						System.out.println(joinMessage);
+						break;
+					case "LEAVE":
+						//tell server user wants to leave game!
+						serverOutput.println("LEAVE_" + name);
+						String leaveMessage = serverToClient.readLine();
+						System.out.println(leaveMessage);
+						break;
+					case "LIST":
+						//tell server user wants list of current players!
+						serverOutput.println("LIST");
+						String listOfPlayers = serverToClient.readLine();
+						System.out.println(listOfPlayers);
+						break;
+					default:
+						break;
 				}
-				*/
-				
-				//store result from server
-				temp = serverInput.nextLine();
-				
-				//print result from server
-				System.out.println(temp);
-				
 			}
-			
+			//close socket, and remove player if in the list
+			serverOutput.println("LEAVE_" + name);
+			clientSocket.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
-
 }

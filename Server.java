@@ -1,47 +1,36 @@
-package sockets;
+package threaded_sockets;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
 
-	public static void main(String[] args) {
-		String clientMessage = "";
-		String temp = "";
+	public static final int PORT = 29732;
+	
+	//list of players
+	static CopyOnWriteArrayList<String> players = new CopyOnWriteArrayList<String>();
+	
+	public static void main (String args[]) {
 		try {
-			//Creating server socket
-			ServerSocket serverSocket = new ServerSocket(29733);
-			
-			System.out.println("Server up and ready for connections...");
-			
-			//accept incoming request to socket from Client
-			Socket ss = serverSocket.accept();
-			
-			//scan for the message that the Client wants to pass to server
-			Scanner clientIn = new Scanner(ss.getInputStream());
-			
-			while (clientIn.hasNextLine()) {
-				//store the Message
-				if ((clientMessage = clientIn.nextLine()) != null) {
-					System.out.println("client typed: " + clientMessage);
-					
-					//manipulate the string, uppercase
-					temp = clientMessage.toUpperCase();
-					
-					//passing new string to client
-					PrintStream serverOutput = new PrintStream(ss.getOutputStream());
-					serverOutput.println(temp);
-				}
-			}
-					
-			
+			new Server().runServer();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-
+	
+	public void runServer() throws IOException{
+		ServerSocket serverSocket = new ServerSocket(PORT);
+		System.out.println("Server up and ready for connections...");
+		
+		while (true) {
+			//listen for connections and accept client connections
+			Socket socket = serverSocket.accept();
+			
+			//Instantiation of server thread, passing in socket with port 29732, and a thread protected list of players
+			new ServerThread(socket, players).start();
+		}
+		
+	}
 }
